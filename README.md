@@ -18,7 +18,7 @@ This is the backend application for the Income Tracker project. It provides the 
 ## Technologies Used
 - Node.js
 - Express.js
-- MongoDB (or similar database, to be confirmed)
+- MongoDB 
 - JWT for authentication
 
 ## Setup
