@@ -10,6 +10,10 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+app.get("/", (req, res) => {
+  res.json({ message: "Backend is running! Use /api/transactions for data." });
+});
+
 // MongoDB Connection
 mongoose.connect('mongodb+srv://clgbca01_db_user:paZnwBbEE4tWMdfQ@income-tracker.e4nvny3.mongodb.net/?retryWrites=true&w=majority&appName=income-tracker')
   .then(() => console.log('Connected to MongoDB Atlas'))
