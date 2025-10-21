@@ -26,6 +26,7 @@ const transactionSchema = new mongoose.Schema({
   amount: { type: Number, required: true },
   category: { type: String, required: true },
   description: { type: String }, // Added description field, not required
+  type: { type: String, enum: ["income", "expense"], required: true }, // New field
 });
 
 const Transaction = mongoose.model("Transaction", transactionSchema);
@@ -41,8 +42,17 @@ app.get("/api/transactions", async (req, res) => {
 });
 
 app.post("/api/transactions", async (req, res) => {
-  const { date, source, amount, category, description } = req.body; // Updated to include description
-  const newTransaction = new Transaction({ date, source, amount, category, description });
+  const { date, source, amount, category, description, type } = req.body; // Updated to include description and type
+
+  // Validate amount based on type
+  if (type === "expense" && amount > 0) {
+    return res.status(400).json({ message: "Expense amount must be negative" });
+  }
+  if (type === "income" && amount < 0) {
+    return res.status(400).json({ message: "Income amount must be positive" });
+  }
+
+  const newTransaction = new Transaction({ date, source, amount, category, description, type });
   try {
     const savedTransaction = await newTransaction.save();
     res.status(201).json(savedTransaction);
@@ -53,11 +63,20 @@ app.post("/api/transactions", async (req, res) => {
 
 app.put("/api/transactions/:id", async (req, res) => {
   const { id } = req.params;
-  const { date, source, amount, category, description } = req.body; // Updated to include description
+  const { date, source, amount, category, description, type } = req.body; // Updated to include description and type
+
+  // Validate amount based on type if type is provided
+  if (type === "expense" && amount > 0) {
+    return res.status(400).json({ message: "Expense amount must be negative" });
+  }
+  if (type === "income" && amount < 0) {
+    return res.status(400).json({ message: "Income amount must be positive" });
+  }
+
   try {
     const updatedTransaction = await Transaction.findByIdAndUpdate(
       id,
-      { date, source, amount, category, description },
+      { date, source, amount, category, description, type },
       { new: true, runValidators: true }
     );
     if (!updatedTransaction) return res.status(404).json({ message: "Transaction not found" });
