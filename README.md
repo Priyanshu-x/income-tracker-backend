@@ -11,7 +11,9 @@ This is the backend application for the Income Tracker project. It provides the 
 
 ## Features
 - User authentication and authorization
-- Record income and expenses
+- Record income and expenses with type (income/expense) and description
+- Track trades
+- Manage journal entries linked to trades
 - View financial summaries
 - Data persistence
 
@@ -64,12 +66,28 @@ npm start
 The server will run on the port specified in your `.env` file (default: `http://localhost:5000`).
 
 ## API Endpoints
-(To be detailed as endpoints are implemented)
 
-- `POST /api/auth/register`: Register a new user
-- `POST /api/auth/login`: Log in a user
-- `GET /api/income`: Get all income entries for the authenticated user
-- `POST /api/income`: Add a new income entry
-- `GET /api/expenses`: Get all expense entries for the authenticated user
-- `POST /api/expenses`: Add a new expense entry
-- `GET /api/summary`: Get financial summary
+### Transactions
+- `GET /api/transactions`: Get all transactions.
+- `POST /api/transactions`: Add a new transaction.
+  - **Request Body:** `{ date: Date, source: String, amount: Number, category: String, description: String (optional), type: "income" | "expense" }`
+  - **Validation:** `amount` must be positive for `income` and negative for `expense`.
+- `PUT /api/transactions/:id`: Update an existing transaction.
+  - **Request Body:** `{ date: Date, source: String, amount: Number, category: String, description: String (optional), type: "income" | "expense" }`
+  - **Validation:** `amount` must be positive for `income` and negative for `expense`.
+- `DELETE /api/transactions/:id`: Delete a transaction.
+
+### Trades
+- `POST /api/trades`: Create a new trade entry.
+  - **Request Body:** `{ date: Date, instrument: String, amount: Number, description: String (optional) }`
+- `GET /api/trades`: Get a list of trades.
+  - **Query Parameters (optional):** `date` (e.g., `/api/trades?date=2023-10-26`) to filter by a specific day.
+
+### Journal Entries
+- `POST /api/journal-entries`: Create a new journal entry.
+  - **Request Body:** `{ date: Date, title: String, content: String (optional), linkedTrades: [{ _id: ObjectId, instrument: String, amount: Number, description: String (optional) }] (optional) }`
+  - **Validation:** `linkedTrades` are validated to exist for the given `date`.
+- `GET /api/journal-entries`: Get all journal entries.
+- `PUT /api/journal-entries/:id`: Update an existing journal entry.
+  - **Request Body:** `{ date: Date, title: String, content: String (optional), linkedTrades: [{ _id: ObjectId, instrument: String, amount: Number, description: String (optional) }] (optional) }`
+- `DELETE /api/journal-entries/:id`: Delete a journal entry.

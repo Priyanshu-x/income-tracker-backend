@@ -29,6 +29,33 @@ const transactionSchema = new mongoose.Schema({
   type: { type: String, enum: ["income", "expense"], required: true }, // New field
 });
 
+// Trade Schema
+const tradeSchema = new mongoose.Schema({
+  date: { type: Date, required: true },
+  instrument: { type: String, required: true },
+  amount: { type: Number, required: true },
+  description: { type: String },
+});
+
+const Trade = mongoose.model("Trade", tradeSchema);
+
+// Journal Entry Schema
+const journalEntrySchema = new mongoose.Schema({
+  date: { type: Date, required: true, default: Date.now },
+  title: { type: String, required: true },
+  content: { type: String },
+  linkedTrades: [
+    {
+      _id: { type: mongoose.Schema.Types.ObjectId, ref: 'Trade' },
+      instrument: { type: String },
+      amount: { type: Number },
+      description: { type: String },
+    },
+  ],
+});
+
+const JournalEntry = mongoose.model("JournalEntry", journalEntrySchema);
+
 const Transaction = mongoose.model("Transaction", transactionSchema);
 
 // Routes (unchanged GET, POST, PUT, DELETE routes remain the same, just ensure description is included)
@@ -97,6 +124,107 @@ app.delete("/api/transactions/:id", async (req, res) => {
   }
 });
 
+// Journal Entry Routes
+app.post("/api/journal-entries", async (req, res) => {
+  const { date, title, content, linkedTrades } = req.body;
+
+  // Validate linked trades
+  if (linkedTrades && linkedTrades.length > 0) {
+    const tradeIds = linkedTrades.map(trade => trade._id);
+    const existingTrades = await Trade.find({ _id: { $in: tradeIds }, date: new Date(date) });
+
+    if (existingTrades.length !== tradeIds.length) {
+      return res.status(400).json({ message: "One or more linked trades not found for the selected date." });
+    }
+  }
+
+  const newJournalEntry = new JournalEntry({ date, title, content, linkedTrades });
+  try {
+    const savedJournalEntry = await newJournalEntry.save();
+    res.status(201).json(savedJournalEntry);
+  } catch (err) {
+    res.status(500).json({ message: "Error saving journal entry", error: err });
+  }
+});
+
+app.get("/api/journal-entries", async (req, res) => {
+  try {
+    const journalEntries = await JournalEntry.find();
+    res.json(journalEntries);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching journal entries", error: err });
+  }
+});
+
+app.put("/api/journal-entries/:id", async (req, res) => {
+  const { id } = req.params;
+  const { date, title, content, linkedTrades } = req.body;
+
+  // Validate linked trades
+  if (linkedTrades && linkedTrades.length > 0) {
+    const tradeIds = linkedTrades.map(trade => trade._id);
+    const existingTrades = await Trade.find({ _id: { $in: tradeIds }, date: new Date(date) });
+
+    if (existingTrades.length !== tradeIds.length) {
+      return res.status(400).json({ message: "One or more linked trades not found for the selected date." });
+    }
+  }
+
+  try {
+    const updatedJournalEntry = await JournalEntry.findByIdAndUpdate(
+      id,
+      { date, title, content, linkedTrades },
+      { new: true, runValidators: true }
+    );
+    if (!updatedJournalEntry) return res.status(404).json({ message: "Journal entry not found" });
+    res.json(updatedJournalEntry);
+  } catch (err) {
+    res.status(500).json({ message: "Error updating journal entry", error: err });
+  }
+});
+
+app.delete("/api/journal-entries/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deletedJournalEntry = await JournalEntry.findByIdAndDelete(id);
+    if (!deletedJournalEntry) return res.status(404).json({ message: "Journal entry not found" });
+    res.json({ message: "Journal entry deleted" });
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting journal entry", error: err });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+
+// Trade Routes
+app.post("/api/trades", async (req, res) => {
+  const { date, instrument, amount, description } = req.body;
+  const newTrade = new Trade({ date, instrument, amount, description });
+  try {
+    const savedTrade = await newTrade.save();
+    res.status(201).json(savedTrade);
+  } catch (err) {
+    res.status(500).json({ message: "Error saving trade", error: err });
+  }
+});
+
+app.get("/api/trades", async (req, res) => {
+  try {
+    const { date } = req.query;
+    let query = {};
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setUTCHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setUTCHours(23, 59, 59, 999);
+      query.date = { $gte: startOfDay, $lte: endOfDay };
+    }
+    const trades = await Trade.find(query);
+    res.json(trades);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching trades", error: err });
+  }
 });
