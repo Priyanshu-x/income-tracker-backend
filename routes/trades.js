@@ -1,0 +1,36 @@
+const express = require("express");
+const router = express.Router();
+const Trade = require("../models/Trade");
+
+// POST new trade
+router.post("/", async (req, res) => {
+    const { date, instrument, amount, description } = req.body;
+    const newTrade = new Trade({ date, instrument, amount, description });
+    try {
+        const savedTrade = await newTrade.save();
+        res.status(201).json(savedTrade);
+    } catch (err) {
+        res.status(500).json({ message: "Error saving trade", error: err });
+    }
+});
+
+// GET trades (with optional date filter)
+router.get("/", async (req, res) => {
+    try {
+        const { date } = req.query;
+        let query = {};
+        if (date) {
+            const startOfDay = new Date(date);
+            startOfDay.setUTCHours(0, 0, 0, 0);
+            const endOfDay = new Date(date);
+            endOfDay.setUTCHours(23, 59, 59, 999);
+            query.date = { $gte: startOfDay, $lte: endOfDay };
+        }
+        const trades = await Trade.find(query);
+        res.json(trades);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching trades", error: err });
+    }
+});
+
+module.exports = router;
