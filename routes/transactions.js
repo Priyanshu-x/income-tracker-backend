@@ -14,7 +14,10 @@ router.get("/", async (req, res) => {
 
 // POST new transaction
 router.post("/", async (req, res) => {
-    const { date, source, amount, category, description, type } = req.body;
+    const {
+        date, source, amount, category, description, type,
+        instrument, lotSize, buyingPrice, sellingPrice, entryTime, exitTime, tax, ruleFollowed
+    } = req.body;
 
     // Validate amount based on type
     if (type === "expense" && amount > 0) {
@@ -24,7 +27,10 @@ router.post("/", async (req, res) => {
         return res.status(400).json({ message: "Income amount must be positive" });
     }
 
-    const newTransaction = new Transaction({ date, source, amount, category, description, type });
+    const newTransaction = new Transaction({
+        date, source, amount, category, description, type,
+        instrument, lotSize, buyingPrice, sellingPrice, entryTime, exitTime, tax, ruleFollowed
+    });
     try {
         const savedTransaction = await newTransaction.save();
         res.status(201).json(savedTransaction);
@@ -36,7 +42,10 @@ router.post("/", async (req, res) => {
 // PUT update transaction
 router.put("/:id", async (req, res) => {
     const { id } = req.params;
-    const { date, source, amount, category, description, type } = req.body;
+    const {
+        date, source, amount, category, description, type,
+        instrument, lotSize, buyingPrice, sellingPrice, entryTime, exitTime, tax, ruleFollowed
+    } = req.body;
 
     // Validate amount based on type if type is provided
     if (type === "expense" && amount > 0) {
@@ -49,7 +58,10 @@ router.put("/:id", async (req, res) => {
     try {
         const updatedTransaction = await Transaction.findByIdAndUpdate(
             id,
-            { date, source, amount, category, description, type },
+            {
+                date, source, amount, category, description, type,
+                instrument, lotSize, buyingPrice, sellingPrice, entryTime, exitTime, tax, ruleFollowed
+            },
             { new: true, runValidators: true }
         );
         if (!updatedTransaction) return res.status(404).json({ message: "Transaction not found" });
