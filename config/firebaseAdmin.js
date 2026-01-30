@@ -7,10 +7,19 @@ try {
         serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
     } else {
         // Development: Local file
-        serviceAccount = require("./serviceAccountKey.json");
+        // Check if file exists before requiring to avoid crash
+        try {
+            serviceAccount = require("./serviceAccountKey.json");
+        } catch (e) {
+            console.error("Local serviceAccountKey.json not found.");
+        }
     }
 } catch (error) {
-    console.error("Failed to load Firebase credentials:", error);
+    console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT env var:", error);
+}
+
+if (!serviceAccount) {
+    throw new Error("Firebase Service Account credentials are missing. Set FIREBASE_SERVICE_ACCOUNT env var or add config/serviceAccountKey.json");
 }
 
 admin.initializeApp({
