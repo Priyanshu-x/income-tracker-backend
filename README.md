@@ -21,7 +21,7 @@ This is the backend application for the Income Tracker project. It provides the 
 - Node.js
 - Express.js
 - MongoDB 
-- JWT for authentication
+- Firebase Admin SDK (for Authentication)
 
 ## Setup
 
@@ -34,7 +34,7 @@ This is the backend application for the Income Tracker project. It provides the 
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/income-tracker-backend.git
+   git clone https://github.com/Priyanshu-x/income-tracker-backend
    cd income-tracker-backend
    ```
 
@@ -48,12 +48,14 @@ This is the backend application for the Income Tracker project. It provides the 
    ```
    PORT=5000
    MONGO_URI=your_mongodb_connection_string
-   JWT_SECRET=your_jwt_secret_key
    NODE_ENV=development
+   # For local development, place serviceAccountKey.json in config/ folder.
+   # For production (Render), set FIREBASE_SERVICE_ACCOUNT to the content of the JSON file.
+   FIREBASE_SERVICE_ACCOUNT={"type": "service_account", ...}
    ```
    - `PORT`: The port on which the server will run.
    - `MONGO_URI`: Your MongoDB connection string.
-   - `JWT_SECRET`: A strong, random secret key for JWT token generation.
+   - `FIREBASE_SERVICE_ACCOUNT`: The full JSON content of your Firebase service account key (required for production).
    - `NODE_ENV`: Set to `production` for deployment.
 
 ## Usage
@@ -91,3 +93,6 @@ The server will run on the port specified in your `.env` file (default: `http://
 - `PUT /api/journal-entries/:id`: Update an existing journal entry.
   - **Request Body:** `{ date: Date, title: String, content: String (optional), linkedTrades: [{ _id: ObjectId, instrument: String, amount: Number, description: String (optional) }] (optional) }`
 - `DELETE /api/journal-entries/:id`: Delete a journal entry.
+
+### Auth & Migration
+- `POST /api/migrate`: Migrates legacy data (without `userId`) to the currently authenticated user. Requires valid Firebase ID token.
