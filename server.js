@@ -17,6 +17,7 @@ app.use(express.json());
 app.use("/api/transactions", require("./routes/transactions"));
 app.use("/api/trades", require("./routes/trades"));
 app.use("/api/journal-entries", require("./routes/journalEntries"));
+app.use("/api/migrate", require("./routes/migration"));
 
 app.get("/", (req, res) => {
   res.json({ message: "Backend is running! Use /api/transactions for data." });
