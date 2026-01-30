@@ -12,6 +12,7 @@ const journalEntrySchema = new mongoose.Schema({
             description: { type: String },
         },
     ],
+    userId: { type: String, required: true, index: true },
 });
 
 module.exports = mongoose.model("JournalEntry", journalEntrySchema);

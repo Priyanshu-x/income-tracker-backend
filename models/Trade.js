@@ -5,6 +5,7 @@ const tradeSchema = new mongoose.Schema({
     instrument: { type: String, required: true },
     amount: { type: Number, required: true },
     description: { type: String },
+    userId: { type: String, required: true, index: true },
 });
 
 module.exports = mongoose.model("Trade", tradeSchema);

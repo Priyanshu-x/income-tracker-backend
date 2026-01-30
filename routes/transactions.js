@@ -1,11 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const Transaction = require("../models/Transaction");
+const verifyToken = require("../middleware/authMiddleware");
 
-// GET all transactions
+// Apply middleware to all routes
+router.use(verifyToken);
+
+// GET all transactions for the user
 router.get("/", async (req, res) => {
     try {
-        const transactions = await Transaction.find();
+        const transactions = await Transaction.find({ userId: req.user.uid });
         res.json(transactions);
     } catch (err) {
         res.status(500).json({ message: "Error fetching transactions", error: err });
@@ -28,6 +32,7 @@ router.post("/", async (req, res) => {
     }
 
     const newTransaction = new Transaction({
+        userId: req.user.uid, // Link to user
         date, source, amount, category, description, type,
         instrument, lotSize, buyingPrice, sellingPrice, entryTime, exitTime, tax, ruleFollowed
     });
@@ -56,15 +61,15 @@ router.put("/:id", async (req, res) => {
     }
 
     try {
-        const updatedTransaction = await Transaction.findByIdAndUpdate(
-            id,
+        const updatedTransaction = await Transaction.findOneAndUpdate(
+            { _id: id, userId: req.user.uid }, // Ensure user owns the transaction
             {
                 date, source, amount, category, description, type,
                 instrument, lotSize, buyingPrice, sellingPrice, entryTime, exitTime, tax, ruleFollowed
             },
             { new: true, runValidators: true }
         );
-        if (!updatedTransaction) return res.status(404).json({ message: "Transaction not found" });
+        if (!updatedTransaction) return res.status(404).json({ message: "Transaction not found or unauthorized" });
         res.json(updatedTransaction);
     } catch (err) {
         res.status(500).json({ message: "Error updating transaction", error: err });
@@ -75,8 +80,8 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
     const { id } = req.params;
     try {
-        const deletedTransaction = await Transaction.findByIdAndDelete(id);
-        if (!deletedTransaction) return res.status(404).json({ message: "Transaction not found" });
+        const deletedTransaction = await Transaction.findOneAndDelete({ _id: id, userId: req.user.uid });
+        if (!deletedTransaction) return res.status(404).json({ message: "Transaction not found or unauthorized" });
         res.json({ message: "Transaction deleted" });
     } catch (err) {
         res.status(500).json({ message: "Error deleting transaction", error: err });

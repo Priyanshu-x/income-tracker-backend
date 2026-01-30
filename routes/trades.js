@@ -1,11 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const Trade = require("../models/Trade");
+const verifyToken = require("../middleware/authMiddleware");
+
+router.use(verifyToken);
 
 // POST new trade
 router.post("/", async (req, res) => {
     const { date, instrument, amount, description } = req.body;
-    const newTrade = new Trade({ date, instrument, amount, description });
+    const newTrade = new Trade({ userId: req.user.uid, date, instrument, amount, description });
     try {
         const savedTrade = await newTrade.save();
         res.status(201).json(savedTrade);
@@ -18,7 +21,7 @@ router.post("/", async (req, res) => {
 router.get("/", async (req, res) => {
     try {
         const { date } = req.query;
-        let query = {};
+        let query = { userId: req.user.uid };
         if (date) {
             const startOfDay = new Date(date);
             startOfDay.setUTCHours(0, 0, 0, 0);

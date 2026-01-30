@@ -15,6 +15,7 @@ const transactionSchema = new mongoose.Schema({
     exitTime: { type: String },
     tax: { type: Number, default: 0 },
     ruleFollowed: { type: Boolean, default: true },
+    userId: { type: String, required: true, index: true }, // Link data to specific user
 });
 
 module.exports = mongoose.model("Transaction", transactionSchema);
